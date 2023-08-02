@@ -1,0 +1,26 @@
+{
+  "py/object": "pros.conductor.project.Project",
+  "py/state": {
+    "project_name": "over-under-4067x",
+    "target": "v5",
+    "templates": {
+      "kernel": {
+        "location": "",
+        "metadata": {
+          "origin": "pros-mainline",
+          "output": "target\\armv7a-vex-eabi\\debug\\over-under-4067x.bin"
+        },
+        "name": "kernel",
+        "py/object": "pros.conductor.templates.local_template.LocalTemplate",
+        "supported_kernels": null,
+        "system_files": [],
+        "target": "v5",
+        "user_files": [],
+        "version": "3.2.0"
+      }
+    },
+    "upload_options": {
+      "icon": "pros"
+    }
+  }
+}

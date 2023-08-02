@@ -40,9 +40,9 @@ impl Robot for Bot {
 
         Bot {
             drive_system: Mutex::new(DriveSystem::new(
-                p.port13, p.port12, p.port11, p.port17, p.port18, p.port19,
+                p.port15, p.port14, p.port13, p.port18, p.port17, p.port16,
             )),
-            shooter_system: Mutex::new(ShooterSystem::new(p.port10, p.port_h)),
+            shooter_system: Mutex::new(ShooterSystem::new(p.port11, p.port_h)),
             wing_system: Mutex::new(WingSystem::new(p.port_g)),
 
             controller: p.master_controller.into(),
