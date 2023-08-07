@@ -1,3 +1,4 @@
+use crate::utils::Debouncer;
 use crate::{utils::Dampener, DriverControlHandler};
 use uom::si::angle::degree;
 use uom::si::angular_velocity::{revolution_per_minute, AngularVelocity};
@@ -19,6 +20,8 @@ pub struct DriveSystem {
     left_dampener: Dampener<Ratio>,
 
     right_dampener: Dampener<Ratio>,
+
+    debouncer: Debouncer,
 }
 
 impl DriveSystem {
@@ -67,6 +70,8 @@ impl DriveSystem {
             reversed_drive_state: false,
             left_dampener: Dampener::new(ratio!(0.4)),
             right_dampener: Dampener::new(ratio!(0.4)),
+
+            debouncer: Debouncer::new(),
         }
     }
 }
@@ -77,10 +82,8 @@ impl DriverControlHandler for DriveSystem {
         // This is to make it easy to drive when intaking, and when aiming to shoot by flipping the drive train to suit whichever current side of the robot is used for reference
 
         // Use outside paddle levers to switch drive direction
-        if controller.down.is_pressed()? {
-            self.reversed_drive_state = true;
-        } else if controller.b.is_pressed()? {
-            self.reversed_drive_state = false;
+        if self.debouncer.test(controller.b.is_pressed()?) {
+            self.reversed_drive_state = !self.reversed_drive_state;
         }
 
         let mut left_input: Ratio = controller.left_stick.get_y()?;
