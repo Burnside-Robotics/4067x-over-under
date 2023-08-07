@@ -1,12 +1,16 @@
-use crate::utils::Debouncer;
-use crate::{utils::Dampener, DriverControlHandler};
-use uom::si::angle::degree;
-use uom::si::angular_velocity::{revolution_per_minute, AngularVelocity};
-use uom::si::f64::{Angle, Length, Ratio};
-use uom::si::length::inch;
-use vex_rs_lib::tank_drive::TankDrive;
-use vex_rs_lib::{gains, ratio};
+use uom::si::{
+    angle::degree,
+    angular_velocity::{revolution_per_minute, AngularVelocity},
+    f64::{Angle, Length, Ratio},
+    length::inch,
+};
+use vex_rs_lib::{gains, ratio, tank_drive::TankDrive};
 use vex_rt::prelude::*;
+
+use crate::{
+    utils::{Dampener, Debouncer},
+    DriverControlHandler,
+};
 
 // The drive ratio is the gearing ratio from the motors to the wheels.
 // Our drive ratio is 36:60, making the wheels turn at 0.6 times the speed of the motors
@@ -77,9 +81,10 @@ impl DriveSystem {
 }
 
 impl DriverControlHandler for DriveSystem {
-    fn driver_control_cycle(&mut self, controller: &Controller) -> Result<(), ControllerError> {
+    fn driver_control_cycle(&mut self, controller: &mut Controller) -> Result<(), ControllerError> {
         // Our drive train can be reversed by pressing controller rear paddle levers
-        // This is to make it easy to drive when intaking, and when aiming to shoot by flipping the drive train to suit whichever current side of the robot is used for reference
+        // This is to make it easy to drive when intaking, and when aiming to shoot by flipping the drive train to suit
+        // whichever current side of the robot is used for reference
 
         // Use outside paddle levers to switch drive direction
         if self.debouncer.test(controller.b.is_pressed()?) {

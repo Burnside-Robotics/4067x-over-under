@@ -1,5 +1,6 @@
-use crate::{utils::Debouncer, DriverControlHandler};
 use vex_rt::prelude::*;
+
+use crate::{utils::Debouncer, DriverControlHandler};
 
 pub struct WingSystem {
     wing_solenoid: AdiDigitalOutput,
@@ -22,11 +23,8 @@ impl WingSystem {
 }
 
 impl DriverControlHandler for WingSystem {
-    fn driver_control_cycle(&mut self, controller: &Controller) -> Result<(), ControllerError> {
-        if self
-            .wing_switch_debouncer
-            .test(controller.right.is_pressed()?)
-        {
+    fn driver_control_cycle(&mut self, controller: &mut Controller) -> Result<(), ControllerError> {
+        if self.wing_switch_debouncer.test(controller.y.is_pressed()?) {
             self.wings_deployed = !self.wings_deployed;
         }
 

@@ -37,9 +37,7 @@ pub struct Debouncer {
 }
 
 impl Debouncer {
-    pub fn new() -> Self {
-        Self { value: false }
-    }
+    pub fn new() -> Self { Self { value: false } }
 
     pub fn test(&mut self, value: bool) -> bool {
         let previous_value = self.value;

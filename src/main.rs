@@ -4,17 +4,9 @@
 
 use core::time::Duration;
 
-use drive_system::DriveSystem;
-use vex_rt::{
-    entry,
-    prelude::*,
-    robot::Robot,
-    rtos::{Context, Loop, Mutex},
-    select,
-};
-use wing_system::WingSystem;
+use vex_rt::prelude::*;
 
-use crate::shooter_system::ShooterSystem;
+use crate::{drive_system::DriveSystem, shooter_system::ShooterSystem, wing_system::WingSystem};
 
 mod drive_system;
 mod shooter_system;
@@ -23,7 +15,7 @@ mod wing_system;
 
 pub trait DriverControlHandler {
     fn driver_control_initialize(&mut self) {}
-    fn driver_control_cycle(&mut self, controller: &Controller) -> Result<(), ControllerError>;
+    fn driver_control_cycle(&mut self, controller: &mut Controller) -> Result<(), ControllerError>;
 }
 
 pub struct Bot {
@@ -31,7 +23,7 @@ pub struct Bot {
     shooter_system: Mutex<ShooterSystem>,
     wing_system: Mutex<WingSystem>,
 
-    controller: Controller,
+    controller: Mutex<Controller>,
 }
 
 impl Robot for Bot {
@@ -61,13 +53,13 @@ impl Robot for Bot {
         loop {
             self.drive_system
                 .lock()
-                .driver_control_cycle(&self.controller);
+                .driver_control_cycle(&mut *self.controller.lock());
             self.shooter_system
                 .lock()
-                .driver_control_cycle(&self.controller);
+                .driver_control_cycle(&mut *self.controller.lock());
             self.wing_system
                 .lock()
-                .driver_control_cycle(&self.controller);
+                .driver_control_cycle(&mut *self.controller.lock());
 
             select! {
                 _ = ctx.done() => break,
