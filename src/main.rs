@@ -31,11 +31,9 @@ impl Robot for Bot {
         println!("initialised");
 
         Bot {
-            drive_system: Mutex::new(DriveSystem::new(
-                p.port15, p.port14, p.port13, p.port18, p.port17, p.port16,
-            )),
-            shooter_system: Mutex::new(ShooterSystem::new(p.port11, p.port_h)),
-            wing_system: Mutex::new(WingSystem::new(p.port_g)),
+            drive_system: DriveSystem::new(p.port15, p.port14, p.port13, p.port18, p.port17, p.port16).into(),
+            shooter_system: ShooterSystem::new(p.port11, p.port_h).into(),
+            wing_system: WingSystem::new(p.port_g).into(),
 
             controller: p.master_controller.into(),
         }
