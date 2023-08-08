@@ -31,8 +31,8 @@ impl Robot for Bot {
         println!("initialised");
 
         Bot {
-            drive_system: DriveSystem::new(p.port15, p.port14, p.port13, p.port18, p.port17, p.port16).into(),
-            shooter_system: ShooterSystem::new(p.port11, p.port_h).into(),
+            drive_system: DriveSystem::new(p.port14, p.port15, p.port16, p.port11, p.port12, p.port13).into(),
+            shooter_system: ShooterSystem::new(p.port18, p.port_h).into(),
             wing_system: WingSystem::new(p.port_g).into(),
 
             controller: p.master_controller.into(),
