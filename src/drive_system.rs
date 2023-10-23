@@ -1,4 +1,3 @@
-use colorsys::Hsl;
 use uom::si::{
     angle::{degree, radian},
     angular_velocity::{revolution_per_minute, AngularVelocity},
@@ -28,12 +27,6 @@ pub struct DriveSystem {
     right_dampener: Dampener<Ratio>,
 
     debouncer: Debouncer,
-
-    led_strip_left: AddressableLed<56>,
-    led_strip_right: AddressableLed<56>,
-    led_strip_back: AddressableLed<45>,
-
-    i: u128,
 }
 
 impl DriveSystem {
@@ -44,9 +37,6 @@ impl DriveSystem {
         port_r1: SmartPort,
         port_r2: SmartPort,
         port_r3: SmartPort,
-        led_port_left: AdiPort,
-        led_port_right: AdiPort,
-        led_port_back: AdiPort,
     ) -> Self {
         let mut left_motors = [
             port_l1.into_motor(Gearset::SixToOne, EncoderUnits::Degrees, true),
@@ -89,12 +79,6 @@ impl DriveSystem {
             right_dampener: Dampener::new(ratio!(0.4)),
 
             debouncer: Debouncer::new(),
-
-            led_strip_right: led_port_right.into_adressable_led().unwrap(),
-            led_strip_left: led_port_left.into_adressable_led().unwrap(),
-            led_strip_back: led_port_back.into_adressable_led().unwrap(),
-
-            i: 0,
         }
     }
 
@@ -113,10 +97,6 @@ impl DriveSystem {
 
 impl RobotSystem for DriveSystem {
     fn driver_control_cycle(&mut self, controller: &mut Controller) -> Result<(), ControllerError> {
-        let red = Hsl::new(0.0, 100.0, 30.0, None);
-        let white = Hsl::new(0.0, 0.0, 60.0, None);
-        let red_end = Hsl::new(360.0, 100.0, 30.0, None);
-
         // Our drive train can be reversed by pressing controller rear paddle levers
         // This is to make it easy to drive when intaking, and when aiming to shoot by flipping the drive train to suit
         // whichever current side of the robot is used for reference
@@ -130,37 +110,8 @@ impl RobotSystem for DriveSystem {
         let mut left_input: Ratio = controller.left_stick.get_y()?;
         let mut right_input: Ratio = controller.right_stick.get_y()?;
 
-        // // Only one LED strip can be set per cycle... Dunno why
-        if self.i == 0 {
-            self.led_strip_right.set_gradient(&red, &red_end, 8..48, false);
-        } else if self.i == 1 {
-            self.led_strip_left.set_gradient(&red, &red_end, 8..48, false);
-        } else if self.i == 2 {
-            self.led_strip_back.set_gradient(&red, &red_end, 0..45, false);
-        } else if self.i % 3 == 0 {
-            self.led_strip_left.rotate(1, 8..48);
-        } else if self.i % 4 == 0 {
-            self.led_strip_right.rotate(1, 8..48);
-        } else {
-            self.led_strip_back.rotate(1, 0..45);
-        }
-
-        self.i += 1;
-
-        // // Reverse Driver inputs if neccesary
         if self.reversed_drive_state {
             (left_input, right_input) = (-right_input, -left_input);
-            self.led_strip_left.set_range(&white, 0..8);
-            self.led_strip_left.set_range(&red, 48..56);
-
-            self.led_strip_right.set_range(&white, 0..8);
-            self.led_strip_right.set_range(&red, 48..56);
-        } else {
-            self.led_strip_left.set_range(&red, 0..8);
-            self.led_strip_left.set_range(&white, 48..56);
-
-            self.led_strip_right.set_range(&red, 0..8);
-            self.led_strip_right.set_range(&white, 48..56);
         }
 
         self.drive_train.drive_tank(

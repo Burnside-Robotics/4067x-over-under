@@ -4,16 +4,15 @@
 
 extern crate alloc;
 
-use alloc::{format, vec};
 use core::time::Duration;
 
+use led_system::LedSystem;
 use uom::si::{
-    angle::degree,
     f64::Length,
     length::{inch, meter},
 };
 use vex_rs_lib::{
-    coordinates::{Coordinates, Position},
+    coordinates::Coordinates,
     odometry::OdometrySystem,
     pure_pursuit::{Command, Direction, PurePursuitSystem},
 };
@@ -22,6 +21,7 @@ use vex_rt::prelude::*;
 use crate::{drive_system::DriveSystem, shooter_system::ShooterSystem, wing_system::WingSystem};
 
 mod drive_system;
+mod led_system;
 mod shooter_system;
 mod utils;
 mod wing_system;
@@ -36,6 +36,8 @@ pub struct Bot {
     shooter_system: Mutex<ShooterSystem>,
     wing_system: Mutex<WingSystem>,
 
+    led_system: Mutex<LedSystem>,
+
     controller: Mutex<Controller>,
 
     odometry_system: Mutex<OdometrySystem>,
@@ -46,12 +48,11 @@ pub struct Bot {
 impl Robot for Bot {
     fn new(p: Peripherals) -> Self {
         Bot {
-            drive_system: DriveSystem::new(
-                p.port14, p.port15, p.port16, p.port11, p.port12, p.port13, p.port_b, p.port_a, p.port_c,
-            )
-            .into(),
+            drive_system: DriveSystem::new(p.port14, p.port15, p.port16, p.port11, p.port12, p.port13).into(),
             shooter_system: ShooterSystem::new(p.port18, p.port_h).into(),
             wing_system: WingSystem::new(p.port_f, p.port_g).into(),
+
+            led_system: LedSystem::new(p.port_b, p.port_a, p.port_c).into(),
 
             controller: p.master_controller.into(),
 
@@ -74,7 +75,7 @@ impl Robot for Bot {
         println!("initialised");
 
         Task::spawn(move || {
-            let mut pause = Loop::new(Duration::from_millis(10));
+            let mut pause = Loop::new(Duration::from_millis(5));
 
             loop {
                 let mut odom_system = self.odometry_system.lock();
@@ -92,6 +93,7 @@ impl Robot for Bot {
             }
         });
 
+        LedSystem::initialize(&self.led_system);
         DriveSystem::initialize(&self.drive_system);
         ShooterSystem::initialize(&self.shooter_system);
         WingSystem::initialize(&self.wing_system);
