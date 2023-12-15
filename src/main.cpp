@@ -40,6 +40,13 @@ class Debouncer {
 		}
 };
 
+Motor catapultMotor(18, false, AbstractMotor::gearset::red, AbstractMotor::encoderUnits::degrees);
+
+ADIButton catapultLimitSwitch('H');
+
+pros::ADIDigitalOut leftWingSolenoid('F');
+pros::ADIDigitalOut rightWingSolenoid('G');
+
 MotorGroup leftDriveGroup = {-14, -15, -16};
 MotorGroup rightDriveGroup = {11, 12, 13};
 
@@ -59,9 +66,24 @@ void initialize() {
 
 	leftDriveGroup.setBrakeMode(AbstractMotor::brakeMode::brake);
 	rightDriveGroup.setBrakeMode(AbstractMotor::brakeMode::brake);
+
+	leftDriveGroup.setGearing(AbstractMotor::gearset::blue);
+	leftDriveGroup.setGearing(AbstractMotor::gearset::blue);
 }
 
 void opcontrol() {
+	Debouncer catapultManualSwitchDebouncer;
+
+	bool catapultManual = false;
+
+
+	bool leftWingDeployed = false;
+	bool rightWingDeployed = false;
+
+	Debouncer leftWingDebouncer;
+	Debouncer rightWingDebouncer;
+
+
 	Dampener leftInputDampener(0.4);
 	Dampener rightInputDampener(0.4);
 
@@ -70,6 +92,53 @@ void opcontrol() {
 	bool driveReversed = false;
 
 	while (true) {
+		/** -------- **/
+		/** Catapult **/
+		/** -------- **/
+
+		if(catapultManualSwitchDebouncer.test(controller.getDigital(ControllerDigital::right))) {
+			catapultManual = !catapultManual;
+		}
+
+		float catapultVoltage;
+
+		if (catapultManual) {
+			if(controller.getDigital(ControllerDigital::L1)) {
+				catapultVoltage = 9000;
+			} else if(controller.getDigital(ControllerDigital::L2)) {
+				catapultVoltage = -9000;
+			} else {
+				catapultVoltage = 0;
+			}
+		} else {
+			if(catapultLimitSwitch.isPressed() && !controller.getDigital(ControllerDigital::L1)) {
+				catapultVoltage = 1800;
+			} else {
+				catapultVoltage = 9000;
+			}
+		}
+
+		catapultMotor.moveVoltage(catapultVoltage);
+
+		/** ----- **/
+		/** Wings **/
+		/** ----- **/
+
+		if(leftWingDebouncer.test(controller.getDigital(ControllerDigital::down))) {
+			leftWingDeployed = !leftWingDeployed;
+		}
+
+		if(rightWingDebouncer.test(controller.getDigital(ControllerDigital::B))) {
+			rightWingDeployed = !rightWingDeployed;
+		}
+
+		leftWingSolenoid.set_value(leftWingDeployed);
+		rightWingSolenoid.set_value(rightWingDeployed);
+
+		/** ----------- **/
+		/** Drive Train **/
+		/** ----------- **/
+
 		if (driveDirectionDebouncer.test(controller.getDigital(ControllerDigital::Y))) {
 			driveReversed = !driveReversed;
 			controller.rumble(".");
