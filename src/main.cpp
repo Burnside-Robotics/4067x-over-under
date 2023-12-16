@@ -28,17 +28,6 @@ class Dampener {
 		}
 };
 
-class Debouncer {
-	private:
-		bool value = false;
-
-	public:
-		bool test(bool target) {
-			bool previousValue = this->value;
-			this->value = target;
-			return !previousValue && target;
-		}
-};
 
 Motor catapultMotor(18, false, AbstractMotor::gearset::red, AbstractMotor::encoderUnits::degrees);
 
@@ -72,7 +61,7 @@ void initialize() {
 }
 
 void opcontrol() {
-	Debouncer catapultManualSwitchDebouncer;
+	ControllerButton catapultManualButton(ControllerDigital::right);
 
 	bool catapultManual = false;
 
@@ -80,14 +69,14 @@ void opcontrol() {
 	bool leftWingDeployed = false;
 	bool rightWingDeployed = false;
 
-	Debouncer leftWingDebouncer;
-	Debouncer rightWingDebouncer;
+	ControllerButton leftWingButton(ControllerDigital::down);
+	ControllerButton rightWingButton(ControllerDigital::B);
 
 
 	Dampener leftInputDampener(0.4);
 	Dampener rightInputDampener(0.4);
 
-	Debouncer driveDirectionDebouncer;
+	ControllerButton driveDirectionButton(ControllerDigital::Y);
 
 	bool driveReversed = false;
 
@@ -96,7 +85,7 @@ void opcontrol() {
 		/** Catapult **/
 		/** -------- **/
 
-		if(catapultManualSwitchDebouncer.test(controller.getDigital(ControllerDigital::right))) {
+		if(catapultManualButton.changedToPressed()) {
 			catapultManual = !catapultManual;
 		}
 
@@ -124,11 +113,11 @@ void opcontrol() {
 		/** Wings **/
 		/** ----- **/
 
-		if(leftWingDebouncer.test(controller.getDigital(ControllerDigital::down))) {
+		if(leftWingButton.changedToPressed()) {
 			leftWingDeployed = !leftWingDeployed;
 		}
 
-		if(rightWingDebouncer.test(controller.getDigital(ControllerDigital::B))) {
+		if(rightWingButton.changedToPressed()) {
 			rightWingDeployed = !rightWingDeployed;
 		}
 
@@ -139,7 +128,7 @@ void opcontrol() {
 		/** Drive Train **/
 		/** ----------- **/
 
-		if (driveDirectionDebouncer.test(controller.getDigital(ControllerDigital::Y))) {
+		if (driveDirectionButton.changedToPressed()) {
 			driveReversed = !driveReversed;
 			controller.rumble(".");
 		}
