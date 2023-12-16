@@ -28,6 +28,7 @@ class Dampener {
 		}
 };
 
+sylib::Addrled backLights = sylib::Addrled(22, 3, 45);
 
 Motor catapultMotor(18, false, AbstractMotor::gearset::red, AbstractMotor::encoderUnits::degrees);
 
@@ -52,6 +53,11 @@ Controller controller;
 void initialize() {
 	pros::lcd::initialize();
 	pros::lcd::set_text(1, "Hello PROS User!");
+
+	sylib::initialize();
+	backLights.gradient(0x990000, 0x990003, 45, 0, false, true);
+	backLights.cycle(*backLights, 5);
+
 
 	leftDriveGroup.setBrakeMode(AbstractMotor::brakeMode::brake);
 	rightDriveGroup.setBrakeMode(AbstractMotor::brakeMode::brake);
