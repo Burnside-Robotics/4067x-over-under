@@ -30,21 +30,23 @@ class Dampener {
 
 sylib::Addrled backLights = sylib::Addrled(22, 3, 45);
 
-Motor catapultMotor(18, false, AbstractMotor::gearset::red, AbstractMotor::encoderUnits::degrees);
+Motor catapultMotor(15, false, AbstractMotor::gearset::red, AbstractMotor::encoderUnits::degrees);
 
 ADIButton catapultLimitSwitch('H');
 
-pros::ADIDigitalOut leftWingSolenoid('F');
-pros::ADIDigitalOut rightWingSolenoid('G');
+pros::ADIDigitalOut leftWingSolenoid('A');
+pros::ADIDigitalOut rightWingSolenoid('F');
 
-MotorGroup leftDriveGroup = {-14, -15, -16};
-MotorGroup rightDriveGroup = {11, 12, 13};
+pros::ADIDigitalOut elevationSolenoid('H');
+
+MotorGroup leftDriveGroup = {-1, -11, -12};
+MotorGroup rightDriveGroup = {10, 20, 19};
 
 std::shared_ptr<OdomChassisController> driveTrain = ChassisControllerBuilder()
 	.withMotors(leftDriveGroup, rightDriveGroup)
 	.withDimensions(AbstractMotor::gearset::blue, {{4_in, 11.5_in}, imev5BlueTPR})
-	.withGains({0.0007, 0, 0}, {0.001, 0, 0}, {0.001, 0, 0})
-	.withSensors(RotationSensor(9), RotationSensor(10), RotationSensor(8))
+	.withGains({0.0009, 0, 0}, {0.002, 0, 0}, {0.001, 0, 0})
+	.withSensors(RotationSensor(2), RotationSensor(9), RotationSensor(13))
 	.withOdometry({{2.75_in, 6.25_in, 3.075_in }, 360}, StateMode::CARTESIAN)
 	.buildOdometry();
 
@@ -66,11 +68,18 @@ void initialize() {
 	leftDriveGroup.setGearing(AbstractMotor::gearset::blue);
 }
 
+void autonomous() {
+	// driveTrain->setState(OdomState{0_m, 0_m, 90_deg});
+	// driveTrain->driveToPoint(Point{-2.1_ft, -1.1_ft}, true);
+	// driveTrain->driveToPoint(Point{0_m, 0.6_m}, false);
+	// driveTrain->driveToPoint(Point{0.15_m, 1.05_m}, true);
+	// driveTrain->driveToPoint(Point{0.15_m, 0.5_m}, false);
+	driveTrain->setState(OdomState{0_m, 0_m, 180_deg});
+	driveTrain->driveToPoint(Point{0_m, 0.5_m}, true);
+}
+
 void opcontrol() {
 	ControllerButton catapultManualButton(ControllerDigital::right);
-
-	bool catapultManual = false;
-
 
 	bool leftWingDeployed = false;
 	bool rightWingDeployed = false;
@@ -86,31 +95,24 @@ void opcontrol() {
 
 	bool driveReversed = false;
 
+	bool elevationDeployed = false;
+	ControllerButton elevationToggle(ControllerDigital::R1);
+
 	while (true) {
 		/** -------- **/
 		/** Catapult **/
 		/** -------- **/
 
-		if(catapultManualButton.changedToPressed()) {
-			catapultManual = !catapultManual;
-		}
-
 		float catapultVoltage;
 
-		if (catapultManual) {
-			if(controller.getDigital(ControllerDigital::L1)) {
-				catapultVoltage = 9000;
-			} else if(controller.getDigital(ControllerDigital::L2)) {
-				catapultVoltage = -9000;
-			} else {
-				catapultVoltage = 0;
-			}
+		if(controller.getDigital(ControllerDigital::L1)) {
+			catapultVoltage = 12000;
+		} else if(controller.getDigital(ControllerDigital::L2)) {
+			catapultVoltage = 9000;
+		} else if (controller.getDigital(ControllerDigital::right)) {
+			catapultVoltage = -9000;
 		} else {
-			if(catapultLimitSwitch.isPressed() && !controller.getDigital(ControllerDigital::L1)) {
-				catapultVoltage = 1800;
-			} else {
-				catapultVoltage = 9000;
-			}
+			catapultVoltage = 0;
 		}
 
 		catapultMotor.moveVoltage(catapultVoltage);
@@ -130,6 +132,12 @@ void opcontrol() {
 		leftWingSolenoid.set_value(leftWingDeployed);
 		rightWingSolenoid.set_value(rightWingDeployed);
 
+		if(elevationToggle.changedToPressed()) {
+			elevationDeployed = !elevationDeployed;
+		}
+
+		elevationSolenoid.set_value(elevationDeployed);
+		
 		/** ----------- **/
 		/** Drive Train **/
 		/** ----------- **/
